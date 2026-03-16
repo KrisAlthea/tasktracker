@@ -8,14 +8,15 @@ namespace tasktracker;
 
 public class TaskManager
 {
-    public static string file = "/home/wei/vs_ws/tasktracker/tasktracker/tasks.json";
-
-    public Dictionary<int, MyTask> Tasks;
+    private static readonly string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tasks.json");
     private static readonly JsonSerializerOptions options = new JsonSerializerOptions
     {
         Converters = { new StatusConverter() },
-        WriteIndented = true // 可选：让JSON格式更易读
+        WriteIndented = true
     };
+
+    public Dictionary<int, MyTask> Tasks;
+
     public TaskManager()
     {
         Tasks = ReadFromFile();
@@ -34,35 +35,57 @@ public class TaskManager
         return tasks;
     }
 
-    public void SaveTasktoFile(MyTask task)
+    public List<MyTask> GetAllTasks()
     {
-        var serializedTask = JsonSerializer.Serialize<MyTask>(task, options);
-        using var writer = new StreamWriter(file);
-        writer.WriteLine(serializedTask);
+        return Tasks.Values.ToList();
     }
 
-    public void SaveTaskstoFile(List<MyTask> tasks)
+    public void SaveAllTasks()
     {
-        foreach (MyTask t in tasks)
-        {
-            SaveTasktoFile(t);
-        }
+        var taskList = Tasks.Values.ToList();
+        var jsonString = JsonSerializer.Serialize(taskList, options);
+        File.WriteAllText(filePath, jsonString);
     }
 
     public Dictionary<int, MyTask> ReadFromFile()
     {
-        var jsonString = File.ReadAllText(file);
-        List<MyTask>? tasks = JsonSerializer.Deserialize<List<MyTask>>(jsonString, options);
-        if (tasks != null)
+        try
         {
-            var taskDic = new Dictionary<int, MyTask>();
-            foreach (var task in tasks)
+            if (!File.Exists(filePath))
             {
-                taskDic.Add(task.id, task);
+                return new Dictionary<int, MyTask>();
             }
-            return taskDic;
+
+            var jsonString = File.ReadAllText(filePath);
+            if (string.IsNullOrWhiteSpace(jsonString))
+            {
+                return new Dictionary<int, MyTask>();
+            }
+
+            List<MyTask>? tasks = JsonSerializer.Deserialize<List<MyTask>>(jsonString, options);
+            if (tasks != null && tasks.Count > 0)
+            {
+                var taskDic = new Dictionary<int, MyTask>();
+                foreach (var task in tasks)
+                {
+                    taskDic.Add(task.id, task);
+                }
+                return taskDic;
+            }
+            return new Dictionary<int, MyTask>();
         }
-        else return new Dictionary<int, MyTask>();
+        catch (Exception)
+        {
+            return new Dictionary<int, MyTask>();
+        }
     }
 
+    public int GetNextId()
+    {
+        if (Tasks.Count == 0)
+        {
+            return 1;
+        }
+        return Tasks.Keys.Max() + 1;
+    }
 }

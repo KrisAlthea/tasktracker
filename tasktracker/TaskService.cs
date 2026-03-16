@@ -1,78 +1,101 @@
 using System;
+using System.Security.Principal;
 
 namespace tasktracker;
 
 public class TaskService : ITaskService
 {
-    public TaskManager taskManager = new TaskManager();
-    public bool AddTask(string description)
+    private readonly TaskManager taskManager;
+
+    public TaskService()
     {
-        var _task = new MyTask(description);
-        taskManager.SaveTasktoFile(_task);
-        return true;
+        taskManager = new TaskManager();
+    }
+
+    public int AddTask(string description)
+    {
+        var id = taskManager.GetNextId();
+        var task = new MyTask(id, description);
+        taskManager.Tasks.Add(id, task);
+        taskManager.SaveAllTasks();
+        return id;
     }
 
     public bool DeleteTask(int id)
     {
-        var task = GetTaskById(id);
-        if (task is not null)
-            taskManager.Tasks.Remove(task.id);
-        return true;
+        if (taskManager.Tasks.ContainsKey(id))
+        {
+            taskManager.Tasks.Remove(id);
+            taskManager.SaveAllTasks();
+            return true;
+        }
+        return false;
     }
 
-    public MyTask GetTaskByDescription(string description)
+    public MyTask? GetTaskByDescription(string description)
     {
-        throw new NotImplementedException();
+        foreach (var task in taskManager.Tasks.Values)
+        {
+            if (task.description.Equals(description, StringComparison.OrdinalIgnoreCase))
+            {
+                return task;
+            }
+        }
+        return null;
     }
 
     public MyTask? GetTaskById(int id)
     {
-        if (taskManager.Tasks.ContainsKey(id))
+        if (taskManager.Tasks.TryGetValue(id, out var task))
         {
-            return taskManager.Tasks.GetValueOrDefault(id);
+            return task;
         }
         return null;
     }
 
     public bool UpdateTask(int id, string description)
     {
-        var task = taskManager.Tasks.GetValueOrDefault(id);
-        if (task is null)
-        {
-            return false;
-        }
-        else
+        if (taskManager.Tasks.TryGetValue(id, out var task))
         {
             task.description = description;
+            task.updatedAt = DateTime.Now;
+            taskManager.SaveAllTasks();
+            return true;
         }
-        return true;
+        return false;
     }
 
     public bool UpdateToDone(int id)
     {
-        var task = taskManager.Tasks.GetValueOrDefault(id);
-        if (task is null)
-        {
-            return false;
-        }
-        else
+        if (taskManager.Tasks.TryGetValue(id, out var task))
         {
             task.status = Status.done;
+            task.updatedAt = DateTime.Now;
+            taskManager.SaveAllTasks();
+            return true;
         }
-        return true;
+        return false;
     }
 
     public bool UpdateToInProgress(int id)
     {
-        var task = taskManager.Tasks.GetValueOrDefault(id);
-        if (task is null)
-        {
-            return false;
-        }
-        else
+        if (taskManager.Tasks.TryGetValue(id, out var task))
         {
             task.status = Status.in_progress;
+            task.updatedAt = DateTime.Now;
+            taskManager.SaveAllTasks();
+            return true;
         }
-        return true;
+        return false;
+    }
+
+    public List<MyTask> GetAllTasks()
+    {
+        return taskManager.GetAllTasks();
+    }
+
+    public List<MyTask> GetTasksByStatus(Status status)
+    {
+        return taskManager.GetTasksByStatus(status);
     }
 }

@@ -5,7 +5,6 @@ namespace tasktracker;
 
 public class MyTask
 {
-    private static int cnt = 1;
     public int id { get; set; }
     public string description { get; set; }
     /// <summary>
@@ -16,39 +15,38 @@ public class MyTask
     public DateTime createdAt { get; set; }
     public DateTime updatedAt { get; set; }
 
-    public MyTask(string description)
+    public MyTask(int id, string description)
     {
-        this.id = cnt++;
+        this.id = id;
         this.description = description;
         this.status = Status.todo;
         this.createdAt = DateTime.Now;
         this.updatedAt = DateTime.Now;
     }
-
 }
 
 public enum Status
 {
     [JsonPropertyName("todo")]
     todo,
-    
+
     [JsonPropertyName("in-progress")]
     in_progress,
-    
+
     [JsonPropertyName("done")]
     done
 }
 
 public static class StatusHelper
 {
-    public static Status GetStatus(string statusString)
+    public static Status GetStatus(string? statusString)
     {
-        return statusString switch
+        return statusString?.ToLower() switch
         {
             "todo" => Status.todo,
             "in-progress" => Status.in_progress,
             "done" => Status.done,
-            _ => Status.done
+            _ => Status.todo  // 默认返回 todo 而非 done
         };
     }
 }

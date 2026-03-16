@@ -22,35 +22,203 @@ task-cli list in-progress
 
 */
 
-
 using System;
+using System.Text.RegularExpressions;
 using tasktracker;
-Console.WriteLine("welcome to task tracker!");
 
-var taskManager = new TaskManager();
-System.Console.WriteLine("use the commands below: <> is needed, () is optional");
-System.Console.WriteLine("add <\"description\">");
-System.Console.WriteLine("update <id> <\"new description\">");
-System.Console.WriteLine("delete <id>");
-System.Console.WriteLine("mark-in-progress <id>");
-System.Console.WriteLine("mark-done <id>");
-System.Console.WriteLine("list (done|todo|in-progress)");
+Console.WriteLine("Welcome to Task Tracker!");
+Console.WriteLine("Use the commands below: <> is required, () is optional");
+Console.WriteLine("  add <\"description\">");
+Console.WriteLine("  update <id> <\"new description\">");
+Console.WriteLine("  delete <id>");
+Console.WriteLine("  mark-in-progress <id>");
+Console.WriteLine("  mark-done <id>");
+Console.WriteLine("  list (done|todo|in-progress)");
+Console.WriteLine("  exit");
+Console.WriteLine();
 
-var input = Console.ReadLine();
-while (string.IsNullOrWhiteSpace(input))
-{
-    input = Console.ReadLine();
-}
 var taskService = new TaskService();
-var commands = input.Split(' ');
 
-switch (commands[0])
+while (true)
 {
-    case "add": taskService.AddTask(commands[1]); break;
-    case "update": taskService.UpdateTask(int.Parse(commands[1]), commands[2]); break;
-    case "delete": taskService.DeleteTask(int.Parse(commands[1])); break;
-    case "mark-in-progress": taskService.UpdateToInProgress(int.Parse(commands[1])); break;
-    case "mark-done": taskService.UpdateToDone(int.Parse(commands[1])); break;
-    case "list": taskManager.GetTasksByStatus(StatusHelper.GetStatus(commands[1])); break;
-    default: System.Console.WriteLine("invalid command"); break;
+    Console.Write("> ");
+    var input = Console.ReadLine();
+
+    if (string.IsNullOrWhiteSpace(input))
+    {
+        continue;
+    }
+
+    var commands = ParseCommand(input);
+
+    if (commands.Length == 0)
+    {
+        Console.WriteLine("Invalid command. Please try again.");
+        continue;
+    }
+
+    switch (commands[0])
+    {
+        case "exit":
+        case "quit":
+            Console.WriteLine("Goodbye!");
+            return;
+
+        case "add":
+            if (commands.Length < 2)
+            {
+                Console.WriteLine("Error: Missing description. Usage: add \"description\"");
+            }
+            else
+            {
+                var id = taskService.AddTask(commands[1]);
+                Console.WriteLine($"Task added successfully (ID: {id})");
+            }
+            break;
+
+        case "update":
+            if (commands.Length < 3)
+            {
+                Console.WriteLine("Error: Missing arguments. Usage: update <id> \"new description\"");
+            }
+            else if (!int.TryParse(commands[1], out int updateId))
+            {
+                Console.WriteLine("Error: Invalid ID. ID must be a number.");
+            }
+            else
+            {
+                if (taskService.UpdateTask(updateId, commands[2]))
+                {
+                    Console.WriteLine($"Task {updateId} updated successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: Task with ID {updateId} not found.");
+                }
+            }
+            break;
+
+        case "delete":
+            if (commands.Length < 2)
+            {
+                Console.WriteLine("Error: Missing ID. Usage: delete <id>");
+            }
+            else if (!int.TryParse(commands[1], out int deleteId))
+            {
+                Console.WriteLine("Error: Invalid ID. ID must be a number.");
+            }
+            else
+            {
+                if (taskService.DeleteTask(deleteId))
+                {
+                    Console.WriteLine($"Task {deleteId} deleted successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: Task with ID {deleteId} not found.");
+                }
+            }
+            break;
+
+        case "mark-in-progress":
+            if (commands.Length < 2)
+            {
+                Console.WriteLine("Error: Missing ID. Usage: mark-in-progress <id>");
+            }
+            else if (!int.TryParse(commands[1], out int progressId))
+            {
+                Console.WriteLine("Error: Invalid ID. ID must be a number.");
+            }
+            else
+            {
+                if (taskService.UpdateToInProgress(progressId))
+                {
+                    Console.WriteLine($"Task {progressId} marked as in-progress.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: Task with ID {progressId} not found.");
+                }
+            }
+            break;
+
+        case "mark-done":
+            if (commands.Length < 2)
+            {
+                Console.WriteLine("Error: Missing ID. Usage: mark-done <id>");
+            }
+            else if (!int.TryParse(commands[1], out int doneId))
+            {
+                Console.WriteLine("Error: Invalid ID. ID must be a number.");
+            }
+            else
+            {
+                if (taskService.UpdateToDone(doneId))
+                {
+                    Console.WriteLine($"Task {doneId} marked as done.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: Task with ID {doneId} not found.");
+                }
+            }
+            break;
+
+        case "list":
+            List<MyTask> tasks;
+            if (commands.Length >= 2)
+            {
+                var status = StatusHelper.GetStatus(commands[1]);
+                tasks = taskService.GetTasksByStatus(status);
+            }
+            else
+            {
+                tasks = taskService.GetAllTasks();
+            }
+
+            if (tasks.Count == 0)
+            {
+                Console.WriteLine("No tasks found.");
+            }
+            else
+            {
+                Console.WriteLine("ID  | Status      | Description");
+                Console.WriteLine("----|-------------|------------");
+                foreach (var task in tasks.OrderBy(t => t.id))
+                {
+                    var statusStr = task.status switch
+                    {
+                        Status.todo => "todo",
+                        Status.in_progress => "in-progress",
+                        Status.done => "done",
+                        _ => "unknown"
+                    };
+                    Console.WriteLine($"{task.id,-3} | {statusStr,-11} | {task.description}");
+                }
+            }
+            break;
+
+        default:
+            Console.WriteLine($"Unknown command: {commands[0]}. Type 'help' for available commands.");
+            break;
+    }
+}
+
+/// <summary>
+/// 解析命令行输入，支持带引号的字符串参数
+/// </summary>
+static string[] ParseCommand(string input)
+{
+    var result = new List<string>();
+    var regex = new Regex(@"[\""]([^\""]*)[\""]|(\S+)");
+    var matches = regex.Matches(input);
+
+    foreach (Match match in matches)
+    {
+        // 如果匹配到引号内的内容，取第一个组；否则取第二个组（无引号的词）
+        var value = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+        result.Add(value);
+    }
+
+    return result.ToArray();
 }
