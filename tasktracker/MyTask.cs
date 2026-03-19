@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Text.Json.Serialization;
-
 namespace tasktracker;
 
 public class MyTask
@@ -10,7 +7,6 @@ public class MyTask
     /// <summary>
     /// todo, in-progress, done
     /// </summary>
-    [JsonPropertyName("status")]
     public Status status { get; set; }
     public DateTime createdAt { get; set; }
     public DateTime updatedAt { get; set; }
@@ -27,13 +23,8 @@ public class MyTask
 
 public enum Status
 {
-    [JsonPropertyName("todo")]
     todo,
-
-    [JsonPropertyName("in-progress")]
     in_progress,
-
-    [JsonPropertyName("done")]
     done
 }
 
