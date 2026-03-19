@@ -109,6 +109,19 @@ Task 2 deleted successfully.
 
 ---
 
+## 项目结构
+
+```
+tasktracker/
+├── Program.cs        # 命令解析与交互循环
+├── TaskManager.cs    # 任务管理与数据持久化
+├── MyTask.cs         # 任务实体与状态枚举
+├── StatusConverter.cs # JSON 状态转换器
+└── tasks.json        # 数据文件（运行时生成）
+```
+
+---
+
 ## 系统要求
 
 - .NET 8.0 SDK
