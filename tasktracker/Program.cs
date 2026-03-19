@@ -59,6 +59,17 @@ while (true)
 
     switch (commands[0])
     {
+        case "help":
+            Console.WriteLine("Available commands:");
+            Console.WriteLine("  add <\"description\">          - Add a new task");
+            Console.WriteLine("  update <id> <\"new description\"> - Update a task");
+            Console.WriteLine("  delete <id>                   - Delete a task");
+            Console.WriteLine("  mark-in-progress <id>         - Mark task as in-progress");
+            Console.WriteLine("  mark-done <id>                - Mark task as done");
+            Console.WriteLine("  list (done|todo|in-progress)  - List tasks");
+            Console.WriteLine("  exit / quit                   - Exit the program");
+            break;
+
         case "exit":
         case "quit":
             Console.WriteLine("Goodbye!");
