@@ -37,7 +37,7 @@ Console.WriteLine("  list (done|todo|in-progress)");
 Console.WriteLine("  exit");
 Console.WriteLine();
 
-var taskService = new TaskService();
+var taskManager = new TaskManager();
 
 while (true)
 {
@@ -82,7 +82,7 @@ while (true)
             }
             else
             {
-                var id = taskService.AddTask(commands[1]);
+                var id = taskManager.AddTask(commands[1]);
                 Console.WriteLine($"Task added successfully (ID: {id})");
             }
             break;
@@ -98,7 +98,7 @@ while (true)
             }
             else
             {
-                if (taskService.UpdateTask(updateId, commands[2]))
+                if (taskManager.UpdateTask(updateId, commands[2]))
                 {
                     Console.WriteLine($"Task {updateId} updated successfully.");
                 }
@@ -120,7 +120,7 @@ while (true)
             }
             else
             {
-                if (taskService.DeleteTask(deleteId))
+                if (taskManager.DeleteTask(deleteId))
                 {
                     Console.WriteLine($"Task {deleteId} deleted successfully.");
                 }
@@ -142,7 +142,7 @@ while (true)
             }
             else
             {
-                if (taskService.UpdateToInProgress(progressId))
+                if (taskManager.UpdateToInProgress(progressId))
                 {
                     Console.WriteLine($"Task {progressId} marked as in-progress.");
                 }
@@ -164,7 +164,7 @@ while (true)
             }
             else
             {
-                if (taskService.UpdateToDone(doneId))
+                if (taskManager.UpdateToDone(doneId))
                 {
                     Console.WriteLine($"Task {doneId} marked as done.");
                 }
@@ -180,11 +180,11 @@ while (true)
             if (commands.Length >= 2)
             {
                 var status = StatusHelper.GetStatus(commands[1]);
-                tasks = taskService.GetTasksByStatus(status);
+                tasks = taskManager.GetTasksByStatus(status);
             }
             else
             {
-                tasks = taskService.GetAllTasks();
+                tasks = taskManager.GetAllTasks();
             }
 
             if (tasks.Count == 0)

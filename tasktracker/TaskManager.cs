@@ -1,91 +1,86 @@
-using System;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices.Marshalling;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace tasktracker;
 
 public class TaskManager
 {
-    private static readonly string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tasks.json");
-    private static readonly JsonSerializerOptions options = new JsonSerializerOptions
+    private static readonly string _filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tasks.json");
+    private static readonly JsonSerializerOptions _options = new()
     {
         Converters = { new StatusConverter() },
         WriteIndented = true
     };
 
-    public Dictionary<int, MyTask> Tasks;
+    private Dictionary<int, MyTask> _tasks;
 
     public TaskManager()
     {
-        Tasks = ReadFromFile();
+        _tasks = LoadFromFile();
     }
 
-    public List<MyTask> GetTasksByStatus(Status status)
+    public int AddTask(string description)
     {
-        var tasks = new List<MyTask>();
-        foreach (var task in Tasks.Values)
-        {
-            if (task.status == status)
-            {
-                tasks.Add(task);
-            }
-        }
-        return tasks;
+        var id = GetNextId();
+        _tasks[id] = new MyTask(id, description);
+        Save();
+        return id;
     }
 
-    public List<MyTask> GetAllTasks()
+    public bool UpdateTask(int id, string description)
     {
-        return Tasks.Values.ToList();
+        if (!_tasks.TryGetValue(id, out var task)) return false;
+        task.description = description;
+        task.updatedAt = DateTime.Now;
+        Save();
+        return true;
     }
 
-    public void SaveAllTasks()
+    public bool UpdateToInProgress(int id)
     {
-        var taskList = Tasks.Values.ToList();
-        var jsonString = JsonSerializer.Serialize(taskList, options);
-        File.WriteAllText(filePath, jsonString);
+        if (!_tasks.TryGetValue(id, out var task)) return false;
+        task.status = Status.in_progress;
+        task.updatedAt = DateTime.Now;
+        Save();
+        return true;
     }
 
-    public Dictionary<int, MyTask> ReadFromFile()
+    public bool UpdateToDone(int id)
     {
-        try
-        {
-            if (!File.Exists(filePath))
-            {
-                return new Dictionary<int, MyTask>();
-            }
-
-            var jsonString = File.ReadAllText(filePath);
-            if (string.IsNullOrWhiteSpace(jsonString))
-            {
-                return new Dictionary<int, MyTask>();
-            }
-
-            List<MyTask>? tasks = JsonSerializer.Deserialize<List<MyTask>>(jsonString, options);
-            if (tasks != null && tasks.Count > 0)
-            {
-                var taskDic = new Dictionary<int, MyTask>();
-                foreach (var task in tasks)
-                {
-                    taskDic.Add(task.id, task);
-                }
-                return taskDic;
-            }
-            return new Dictionary<int, MyTask>();
-        }
-        catch (Exception)
-        {
-            return new Dictionary<int, MyTask>();
-        }
+        if (!_tasks.TryGetValue(id, out var task)) return false;
+        task.status = Status.done;
+        task.updatedAt = DateTime.Now;
+        Save();
+        return true;
     }
 
-    public int GetNextId()
+    public bool DeleteTask(int id)
     {
-        if (Tasks.Count == 0)
-        {
-            return 1;
-        }
-        return Tasks.Keys.Max() + 1;
+        if (!_tasks.Remove(id)) return false;
+        Save();
+        return true;
+    }
+
+    public MyTask? GetTaskById(int id) => _tasks.GetValueOrDefault(id);
+
+    public List<MyTask> GetAllTasks() => _tasks.Values.ToList();
+
+    public List<MyTask> GetTasksByStatus(Status status) =>
+        _tasks.Values.Where(t => t.status == status).ToList();
+
+    private int GetNextId() => _tasks.Count == 0 ? 1 : _tasks.Keys.Max() + 1;
+
+    private void Save() => File.WriteAllText(_filePath, JsonSerializer.Serialize(_tasks.Values.ToList(), _options));
+
+    private Dictionary<int, MyTask> LoadFromFile()
+    {
+        if (!File.Exists(_filePath)) return [];
+
+        var json = File.ReadAllText(_filePath);
+        if (string.IsNullOrWhiteSpace(json)) return [];
+
+        var list = JsonSerializer.Deserialize<List<MyTask>>(json, _options);
+        if (list == null || list.Count == 0) return [];
+
+        return list.ToDictionary(t => t.id);
     }
 }
