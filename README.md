@@ -2,7 +2,7 @@
 
 ## 概述
 
-Task Tracker 是一个命令行任务管理工具，支持任务的增删改查、状态管理及数据持久化存储。
+[Task Tracker](https://roadmap.sh/projects/task-tracker) 是一个命令行任务管理工具，支持任务的增删改查、状态管理及数据持久化存储。
 
 ---
 
@@ -23,16 +23,16 @@ dotnet run
 
 ## 命令列表
 
-| 命令 | 语法 | 说明 |
-|------|------|------|
-| add | `add "描述"` | 添加新任务 |
-| update | `update <id> "新描述"` | 更新任务描述 |
-| delete | `delete <id>` | 删除任务 |
-| mark-in-progress | `mark-in-progress <id>` | 标记为进行中 |
-| mark-done | `mark-done <id>` | 标记为已完成 |
-| list | `list [状态]` | 列出任务（可选过滤状态） |
-| help | `help` | 显示帮助信息 |
-| exit | `exit` | 退出程序 |
+| 命令             | 语法                    | 说明                     |
+| ---------------- | ----------------------- | ------------------------ |
+| add              | `add "描述"`            | 添加新任务               |
+| update           | `update <id> "新描述"`  | 更新任务描述             |
+| delete           | `delete <id>`           | 删除任务                 |
+| mark-in-progress | `mark-in-progress <id>` | 标记为进行中             |
+| mark-done        | `mark-done <id>`        | 标记为已完成             |
+| list             | `list [状态]`           | 列出任务（可选过滤状态） |
+| help             | `help`                  | 显示帮助信息             |
+| exit             | `exit`                  | 退出程序                 |
 
 ---
 
@@ -52,10 +52,10 @@ Task added successfully (ID: 2)
 
 ```
 > list
-ID  | Status      | Description
-----|-------------|------------
-1   | todo        | Buy groceries
-2   | todo        | Clean house
+| ID  | Status | Description   |
+| --- | ------ | ------------- |
+| 1   | todo   | Buy groceries |
+| 2   | todo   | Clean house   |
 ```
 
 ### 按状态筛选
@@ -94,11 +94,11 @@ Task 2 deleted successfully.
 
 ## 任务状态
 
-| 状态 | 说明 |
-|------|------|
-| `todo` | 待办（默认状态） |
-| `in-progress` | 进行中 |
-| `done` | 已完成 |
+| 状态          | 说明             |
+| ------------- | ---------------- |
+| `todo`        | 待办（默认状态） |
+| `in-progress` | 进行中           |
+| `done`        | 已完成           |
 
 ---
 
